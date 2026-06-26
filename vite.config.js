@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
     ],
     define: {
-      'import.meta.env.BACKEND_URL': JSON.stringify(env.BACKEND_URL || 'https://split-be-app.onrender.com'),
+      'import.meta.env.BACKEND_URL': JSON.stringify(env.BACKEND_URL || 'https://split-app-back-end.onrender.com'),
     },
     server: {
       host: true,
@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
       open: true,
       proxy: {
         "/api": {
-          target: env.BACKEND_URL || 'https://split-be-app.onrender.com',
+          target: env.BACKEND_URL || 'https://split-app-back-end.onrender.com',
           changeOrigin: true,
           secure: false,
         },
