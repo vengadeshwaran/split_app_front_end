@@ -1,0 +1,16 @@
+export const myFriends = [
+  { id: 1,  name: "Lakshmi V",   initials: "LV", color: "bg-pink-500"    },
+  { id: 2,  name: "Mohamed A",   initials: "MA", color: "bg-sky-500"     },
+  { id: 3,  name: "Sneha P",     initials: "SP", color: "bg-purple-500"  },
+  { id: 4,  name: "Ravi T",      initials: "RT", color: "bg-amber-500"   },
+  { id: 5,  name: "Divya R",     initials: "DR", color: "bg-cyan-500"    },
+  { id: 6,  name: "Karthik M",   initials: "KM", color: "bg-emerald-500" },
+  { id: 7,  name: "Priya S",     initials: "PS", color: "bg-rose-500"    },
+  { id: 8,  name: "Arun Kumar",  initials: "AK", color: "bg-indigo-500"  },
+  { id: 9,  name: "Nithya K",    initials: "NK", color: "bg-lime-500"    },
+  { id: 10, name: "Surya B",     initials: "SB", color: "bg-orange-500"  },
+  { id: 11, name: "Meena J",     initials: "MJ", color: "bg-teal-500"    },
+  { id: 12, name: "Vijay R",     initials: "VR", color: "bg-violet-500"  },
+  { id: 13, name: "Anitha C",    initials: "AC", color: "bg-fuchsia-500" },
+  { id: 14, name: "Deepak N",    initials: "DN", color: "bg-red-500"     },
+];
