@@ -56,10 +56,7 @@ const CurrencySettingsPage = () => {
       dispatch(setCurrency({ name: selected, symbol: selectedSymbol }));
       navigate(-1);
     },
-    onError: () => {
-      dispatch(setCurrency({ name: selected, symbol: selectedSymbol }));
-      navigate(-1);
-    },
+    onError: () => {},
   });
 
   const handleApply = () => {
