@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { Eye, EyeOff, SplitSquareHorizontal } from "lucide-react";
+import { setUserState } from "../../redux/slice/userSlice";
+import { setCurrency } from "../../redux/slice/currencySlice";
+import { getSymbolByName } from "../../constants/currencies";
 import { useReusableMutation } from "../../customHooks/useDataQuery";
 
 const SignUpPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [name,        setName]        = useState("");
   const [email,       setEmail]       = useState("");
@@ -17,8 +22,18 @@ const SignUpPage = () => {
   const passwordMismatch = confirm.length > 0 && confirm !== password;
 
   const { mutate: registerUser, isPending } = useReusableMutation({
-    onSuccess: () => {
-      navigate("/verify", { state: { email } });
+    onSuccess: (res) => {
+      const currencyName = res.user.preferred_currency || 'Indian Rupee (₹)';
+      dispatch(setUserState({
+        isAuthenticated: true,
+        token:    res.token,
+        name:     res.user.name,
+        email:    res.user.email,
+        user_id:  res.user.id,
+        is_admin: res.user.is_admin || false,
+      }));
+      dispatch(setCurrency({ name: currencyName, symbol: getSymbolByName(currencyName) }));
+      navigate("/dashboard");
     },
     onError: (err) => {
       const msg =
