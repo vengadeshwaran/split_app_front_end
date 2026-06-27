@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import axios from "axios";
 import { Eye, EyeOff, SplitSquareHorizontal } from "lucide-react";
 import { setUserState } from "../../redux/slice/userSlice";
 import { setCurrency } from "../../redux/slice/currencySlice";
@@ -22,8 +23,7 @@ const SignUpPage = () => {
   const passwordMismatch = confirm.length > 0 && confirm !== password;
 
   const { mutate: registerUser, isPending } = useReusableMutation({
-    onSuccess: (res) => {
-      const currencyName = res.user.preferred_currency || 'Indian Rupee (₹)';
+    onSuccess: async (res) => {
       dispatch(setUserState({
         isAuthenticated: true,
         token:    res.token,
@@ -32,7 +32,14 @@ const SignUpPage = () => {
         user_id:  res.user.id,
         is_admin: res.user.is_admin || false,
       }));
-      dispatch(setCurrency({ name: currencyName, symbol: getSymbolByName(currencyName) }));
+      try {
+        const { data } = await axios.get("settings/currency", {
+          headers: { Authorization: `Bearer ${res.token}` },
+        });
+        dispatch(setCurrency({ name: data.currency, symbol: getSymbolByName(data.currency) }));
+      } catch {
+        dispatch(setCurrency({ name: "Indian Rupee (₹)", symbol: getSymbolByName("Indian Rupee (₹)") }));
+      }
       navigate("/dashboard");
     },
     onError: (err) => {

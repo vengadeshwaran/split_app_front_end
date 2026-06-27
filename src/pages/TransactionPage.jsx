@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { CalendarDays, ArrowDownLeft, Receipt, CheckCircle2, Loader2 } from "lucide-react";
+import { CalendarDays, ArrowDownLeft, Receipt, CheckCircle2, Loader2, XCircle } from "lucide-react";
 import PrimaryButton from "../components/PrimaryButton";
 import { useResuableQuery, useReusableMutation } from "../customHooks/useDataQuery";
 import { setPaymentComplete } from "../redux/slice/chatSlice";
 
 const BADGE = {
-  expense: { label: "EXPENSE LOGGED",    cls: "bg-amber-100 text-amber-700"    },
-  payment: { label: "PAYMENT COMPLETED", cls: "bg-emerald-100 text-emerald-700" },
-  request: { label: "REQUEST SENT",      cls: "bg-indigo-100 text-indigo-700"  },
+  expense:          { label: "EXPENSE LOGGED",    cls: "bg-amber-100 text-amber-700"    },
+  payment:          { label: "PAYMENT COMPLETED", cls: "bg-emerald-100 text-emerald-700" },
+  request_sent:     { label: "REQUEST SENT",      cls: "bg-indigo-100 text-indigo-700"  },
+  request_received: { label: "MONEY REQUESTED",   cls: "bg-rose-100 text-rose-700"      },
 };
 
 const formatTime = (dateStr) => {
@@ -35,7 +36,9 @@ const TransactionPage = () => {
   const completedFriends = useSelector((s) => s.chat.completedFriends);
   const friendName    = decodeURIComponent(name);
 
-  const [expandedId, setExpandedId] = useState(null);
+  const [expandedId,  setExpandedId]  = useState(null);
+  const [actionError, setActionError] = useState("");
+  const bottomRef = useRef(null);
 
   const { data: transactions = [], isLoading, refetch } = useResuableQuery({
     endpoint:   `transactions/with/${id}`,
@@ -43,8 +46,14 @@ const TransactionPage = () => {
     dependency: id,
   });
 
+  useEffect(() => {
+    if (!isLoading) {
+      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+    }
+  }, [isLoading, transactions]);
+
   const { mutate: complete, isPending: completing } = useReusableMutation({
-    onSuccess: (data, variables) => {
+    onSuccess: () => {
       dispatch(setPaymentComplete(String(id)));
       refetch();
       setExpandedId(null);
@@ -52,13 +61,35 @@ const TransactionPage = () => {
     onError: () => {},
   });
 
+  const { mutate: acceptMutation, isPending: isAccepting } = useReusableMutation({
+    onSuccess: () => { refetch(); setActionError(""); },
+    onError: (err) => {
+      setActionError(err?.response?.data?.error || "Failed to accept. Please try again.");
+    },
+  });
+
+  const { mutate: declineMutation, isPending: isDeclining } = useReusableMutation({
+    onSuccess: () => { refetch(); setActionError(""); },
+    onError: (err) => {
+      setActionError(err?.response?.data?.error || "Failed to decline. Please try again.");
+    },
+  });
+
   const handleMarkComplete = (txId) => {
-    complete({
-      endPoint: `transactions/${txId}/complete`,
-      method:   "patch",
-      json:     false,
-    });
+    complete({ endPoint: `transactions/${txId}/complete`, method: "patch", json: false });
   };
+
+  const handleAccept = (txId) => {
+    setActionError("");
+    acceptMutation({ endPoint: `transactions/${txId}/accept`, method: "patch", json: false });
+  };
+
+  const handleDecline = (txId) => {
+    setActionError("");
+    declineMutation({ endPoint: `transactions/${txId}/decline`, method: "patch", json: false });
+  };
+
+  const isActioning = isAccepting || isDeclining;
 
   const ledgerStart     = transactions.length > 0 ? transactions[0].created_at : null;
   const isPaymentDone   = completedFriends[String(id)] ||
@@ -107,10 +138,20 @@ const TransactionPage = () => {
         {!isLoading && transactions.map((tx) => {
           const isFromMe    = Number(tx.from_user_id) === Number(currentUserId);
           const side        = isFromMe ? "right" : "left";
-          const badge       = BADGE[tx.type] || BADGE.expense;
-          const title       = buildTitle(tx.type, isFromMe, friendName);
           const isCompleted = tx.status === "completed";
+          const isDeclined  = tx.status === "declined";
+          const isResolved  = isCompleted || isDeclined;
+
+          const badgeKey    = tx.type === "request"
+            ? (isFromMe ? "request_sent" : "request_received")
+            : tx.type;
+          const badge       = BADGE[badgeKey] || BADGE.expense;
+          const title       = buildTitle(tx.type, isFromMe, friendName);
           const isExpanded  = expandedId === tx.id;
+
+          /* receiver sees Accept/Decline only on pending requests */
+          const showActions = tx.type === "request" && !isFromMe && !isResolved;
+          const isExpandable = (!isFromMe && showActions) || (isFromMe && !isResolved);
 
           return (
             <div
@@ -118,13 +159,19 @@ const TransactionPage = () => {
               className={`flex ${side === "right" ? "justify-end" : "justify-start"}`}
             >
               <div
-                onClick={() => isFromMe && !isCompleted && setExpandedId(isExpanded ? null : tx.id)}
+                onClick={() => isExpandable && setExpandedId(isExpanded ? null : tx.id)}
                 className={`max-w-[80%] rounded-2xl px-4 py-3.5 space-y-2 shadow-sm transition-all
                   ${side === "right"
-                    ? isCompleted
-                      ? "bg-emerald-100 border border-emerald-300"
-                      : "bg-emerald-50 border border-emerald-200 cursor-pointer active:scale-[0.98]"
-                    : "bg-white border border-slate-200"
+                    ? isDeclined
+                      ? "bg-slate-100 border border-slate-300 opacity-70"
+                      : isCompleted
+                        ? "bg-emerald-100 border border-emerald-300"
+                        : "bg-emerald-50 border border-emerald-200 cursor-pointer active:scale-[0.98]"
+                    : isDeclined
+                      ? "bg-rose-50 border border-rose-200 opacity-75"
+                      : showActions
+                        ? "bg-white border border-slate-200 cursor-pointer active:scale-[0.98]"
+                        : "bg-white border border-slate-200"
                   }
                 `}
               >
@@ -136,6 +183,11 @@ const TransactionPage = () => {
                   {isCompleted && (
                     <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wide bg-emerald-600 text-white flex items-center gap-1">
                       <CheckCircle2 className="w-2.5 h-2.5" /> COMPLETED
+                    </span>
+                  )}
+                  {isDeclined && (
+                    <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wide bg-rose-600 text-white flex items-center gap-1">
+                      <XCircle className="w-2.5 h-2.5" /> DECLINED
                     </span>
                   )}
                   <span className="text-[10px] text-slate-400 font-medium">
@@ -159,8 +211,36 @@ const TransactionPage = () => {
                   </span>
                 </div>
 
-                {/* Mark as Complete — appears only when expanded (right card, not yet completed) */}
-                {isFromMe && !isCompleted && isExpanded && (
+                {/* Accept / Decline — receiver, pending request, expanded */}
+                {showActions && isExpanded && (
+                  <div className="pt-2 border-t border-rose-100 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleDecline(tx.id); }}
+                      disabled={isActioning}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-extrabold py-2 rounded-xl transition-all disabled:opacity-50"
+                    >
+                      {isDeclining
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <XCircle className="w-3.5 h-3.5" />}
+                      Decline
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleAccept(tx.id); }}
+                      disabled={isActioning}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-extrabold py-2 rounded-xl transition-all shadow-sm disabled:opacity-50"
+                    >
+                      {isAccepting
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <CheckCircle2 className="w-3.5 h-3.5" />}
+                      Accept
+                    </button>
+                  </div>
+                )}
+
+                {/* Mark as Complete — sender, pending, expanded */}
+                {isFromMe && !isResolved && isExpanded && (
                   <div className="pt-2 border-t border-emerald-200">
                     <button
                       type="button"
@@ -179,7 +259,19 @@ const TransactionPage = () => {
             </div>
           );
         })}
+        <div ref={bottomRef} />
       </div>
+
+      {/* Error toast */}
+      {actionError && (
+        <div
+          onClick={() => setActionError("")}
+          className="fixed bottom-20 left-4 right-4 z-50 bg-rose-600 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2 cursor-pointer"
+        >
+          <XCircle className="w-4 h-4 shrink-0" />
+          {actionError}
+        </div>
+      )}
 
       {/* Bottom Button */}
       <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-white border-t border-slate-100">

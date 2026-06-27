@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
     ],
     define: {
-      'import.meta.env.BACKEND_URL': JSON.stringify(env.BACKEND_URL || 'https://split-app-back-end.onrender.com'),
+      'import.meta.env.BACKEND_URL': JSON.stringify(env.BACKEND_URL || 'http://localhost:5000'),
     },
     server: {
       host: true,
@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
       open: true,
       proxy: {
         "/api": {
-          target: env.BACKEND_URL || 'https://split-app-back-end.onrender.com',
+          target: env.BACKEND_URL || 'http://localhost:5000',
           changeOrigin: true,
           secure: false,
         },

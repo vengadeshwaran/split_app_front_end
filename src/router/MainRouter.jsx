@@ -22,6 +22,7 @@ import RequestMoneyPage from "../pages/RequestMoneyPage";
 import GroupSpliPage from "../pages/GroupSpliPage";
 import ExpenseSplitDetailPage from "../pages/ExpenseSplitDetailPage";
 import CurrencySettingsPage from "../pages/CurrencySettingsPage";
+import AdminDashboardPage from "../pages/AdminDashboardPage";
 import CreateGroupPage from "../pages/CreateGroupPage";
 import EditGroupPage from "../pages/EditGroupPage";
 import PaymentSummaryPage from "../pages/PaymentSummaryPage";
@@ -59,6 +60,7 @@ const MainRouter = () => [
       <Route path="/audit" element={<AuditReports />} />
       <Route path="/settings" element={<UserSettings />} />
       <Route path="/currency" element={<CurrencySettingsPage />} />
+      <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
       <Route path="/transaction/:id/:name" element={<TransactionPage />} />
       <Route path="/payment-summary/:id/:name" element={<PaymentSummaryPage />} />
       <Route path="/group/:id/:name" element={<GroupTransactionPage />} />

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Plus, Loader2, MessageSquare, Clock, CheckCircle2, Check } from "lucide-react";
+import { Plus, Loader2, MessageSquare, Clock, CheckCircle2, Check, XCircle, ArrowDownLeft } from "lucide-react";
 import PrimaryButton from "../components/PrimaryButton";
 import { useResuableQuery, useReusableMutation } from "../customHooks/useDataQuery";
 
@@ -94,8 +94,10 @@ const GroupTransactionPage = () => {
   const cs = useSelector((s) => s.currency.symbol);
   const currentUserId = useSelector((s) => s.user.user_id);
   const groupName = decodeURIComponent(name);
-  const [activeTab, setActiveTab] = useState("chat");
-  const [selectedKey, setSelectedKey] = useState(null); // "owe_<id>" or "recv_<id>"
+  const [activeTab, setActiveTab]   = useState("chat");
+  const [selectedKey, setSelectedKey] = useState(null);
+  const [reqError, setReqError]     = useState("");
+  const bottomRef = useRef(null);
 
   /* ── Chat ── */
   const { data: messages = [], isLoading: loadingMessages } = useResuableQuery({
@@ -103,6 +105,48 @@ const GroupTransactionPage = () => {
     withToken: true,
     dependency: id,
   });
+
+  useEffect(() => {
+    if (!loadingMessages) {
+      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+    }
+  }, [loadingMessages, messages]);
+
+  /* ── Pending money requests from group members (to me) ── */
+  const {
+    data: pendingRequests = [],
+    refetch: refetchRequests,
+  } = useResuableQuery({
+    endpoint:   `groups/${id}/requests`,
+    withToken:  true,
+    dependency: id,
+  });
+
+  const { mutate: acceptReq, isPending: isAcceptingReq } = useReusableMutation({
+    onSuccess: () => { refetchRequests(); setReqError(""); },
+    onError: (err) => {
+      setReqError(err?.response?.data?.error || "Failed to accept. Please try again.");
+    },
+  });
+
+  const { mutate: declineReq, isPending: isDecliningReq } = useReusableMutation({
+    onSuccess: () => { refetchRequests(); setReqError(""); },
+    onError: (err) => {
+      setReqError(err?.response?.data?.error || "Failed to decline. Please try again.");
+    },
+  });
+
+  const isReqActioning = isAcceptingReq || isDecliningReq;
+
+  const handleGroupAccept = (txId) => {
+    setReqError("");
+    acceptReq({ endPoint: `transactions/${txId}/accept`, method: "patch", json: false });
+  };
+
+  const handleGroupDecline = (txId) => {
+    setReqError("");
+    declineReq({ endPoint: `transactions/${txId}/decline`, method: "patch", json: false });
+  };
 
   /* ── My pairwise balances ── */
   const {
@@ -138,7 +182,7 @@ const GroupTransactionPage = () => {
   const totalOwedMe  = owedToMe.reduce((s, b) => s + b.pending, 0);
 
   return (
-    <div className="flex flex-col h-full min-h-screen bg-transparent md:px-6">
+    <div className="flex flex-col h-full overflow-hidden bg-transparent md:px-6">
 
       {/* Tabs */}
       <div className="flex border-b border-slate-200 bg-white px-4">
@@ -237,6 +281,75 @@ const GroupTransactionPage = () => {
       {/* ── CHAT TAB ── */}
       {activeTab === "chat" && (
         <div className="flex-1 overflow-y-auto py-4 pb-24 space-y-3 px-4">
+
+          {/* Pending money requests from group members */}
+          {pendingRequests.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">
+                Pending Requests
+              </p>
+              {pendingRequests.map((req) => (
+                <div key={req.id} className="bg-white border border-rose-200 rounded-2xl px-4 py-3.5 shadow-sm space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wide bg-rose-100 text-rose-700 flex items-center gap-1">
+                      <ArrowDownLeft className="w-2.5 h-2.5" /> MONEY REQUESTED
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
+                      style={{ backgroundColor: req.from_color }}
+                    >
+                      {req.from_name?.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase()).join("")}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{req.from_name} requested money</p>
+                      {req.description && (
+                        <p className="text-xs text-slate-500">{req.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                    <span className="text-xs font-bold text-slate-500">Amount</span>
+                    <span className="text-base font-black text-rose-700">
+                      {req.currency} {Number(req.amount).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleGroupDecline(req.id)}
+                      disabled={isReqActioning}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-extrabold py-2 rounded-xl transition-all disabled:opacity-50"
+                    >
+                      {isDecliningReq ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                      Decline
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleGroupAccept(req.id)}
+                      disabled={isReqActioning}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-extrabold py-2 rounded-xl transition-all shadow-sm disabled:opacity-50"
+                    >
+                      {isAcceptingReq ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                      Accept
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {reqError && (
+                <div
+                  onClick={() => setReqError("")}
+                  className="bg-rose-600 text-white text-xs font-bold px-4 py-3 rounded-2xl flex items-center gap-2 cursor-pointer"
+                >
+                  <XCircle className="w-4 h-4 shrink-0" />
+                  {reqError}
+                </div>
+              )}
+            </div>
+          )}
+
           {loadingMessages ? (
             <div className="flex items-center justify-center py-12 gap-2 text-slate-400">
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -252,16 +365,28 @@ const GroupTransactionPage = () => {
             </div>
           ) : (
             messages.map((msg) => {
-              const isMe = Number(msg.from_user_id) === Number(currentUserId);
-              const badgeColor = msg.type === "expense"
-                ? "bg-amber-100 text-amber-700"
-                : "bg-emerald-100 text-emerald-700";
-              const badgeLabel = msg.type === "expense" ? "EXPENSE LOGGED" : "PAYMENT COMPLETED";
+              const isMe        = Number(msg.from_user_id) === Number(currentUserId);
+              const isExpense   = msg.type === "expense";
+              const hasSplits   = msg.has_splits;
+              const myShare     = msg.my_share != null ? Number(msg.my_share) : null;
+              const isExcluded  = isExpense && !isMe && hasSplits && myShare === null;
+              const badgeColor  = isExpense ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700";
+              const badgeLabel  = isExpense ? "EXPENSE LOGGED" : "PAYMENT COMPLETED";
               const title = isMe
-                ? msg.type === "expense" ? "You added an expense" : "You sent a payment"
-                : msg.type === "expense"
+                ? isExpense ? "You added an expense" : "You sent a payment"
+                : isExpense
                   ? `${msg.from_name} added expense`
                   : `${msg.from_name} sent payment`;
+
+              // Determine amount label + value for this user
+              let amountLabel = "Total";
+              let amountValue = Number(msg.amount);
+              if (isExpense && !isMe && !isExcluded) {
+                // Included non-payer: show their share
+                const shareAmt = hasSplits ? myShare : Number(msg.amount);
+                amountLabel = "Your share";
+                amountValue = shareAmt;
+              }
 
               return (
                 <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
@@ -270,10 +395,12 @@ const GroupTransactionPage = () => {
                       <p className="text-[10px] font-bold text-slate-400 px-1">{msg.from_name}</p>
                     )}
                     <div
-                      onClick={() => isMe && navigate(`/expense-detail/${id}/${name}/${msg.id}`)}
+                      onClick={() => isMe && isExpense && navigate(`/expense-detail/${id}/${name}/${msg.id}`)}
                       className={`rounded-2xl px-4 py-3.5 space-y-2 shadow-sm transition-transform ${
-                        isMe
+                        isMe && isExpense
                           ? "bg-emerald-50 border border-emerald-200 cursor-pointer active:scale-[0.98]"
+                          : isExcluded
+                          ? "bg-slate-50 border border-slate-200 opacity-70"
                           : "bg-white border border-slate-200"
                       }`}
                     >
@@ -290,10 +417,18 @@ const GroupTransactionPage = () => {
                         <p className="text-xs text-slate-500 leading-relaxed">{msg.description}</p>
                       )}
                       <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                        <span className="text-xs font-bold text-slate-500">Total</span>
-                        <span className="text-base font-black text-slate-800 tracking-wide">
-                          {cs}{Number(msg.amount).toFixed(2)}
-                        </span>
+                        {isExcluded ? (
+                          <span className="text-xs font-bold text-slate-400 italic">Not included in this split</span>
+                        ) : (
+                          <>
+                            <span className="text-xs font-bold text-slate-500">{amountLabel}</span>
+                            <span className={`text-base font-black tracking-wide ${
+                              amountLabel === "Your share" ? "text-rose-600" : "text-slate-800"
+                            }`}>
+                              {cs}{(amountValue ?? 0).toFixed(2)}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -301,6 +436,7 @@ const GroupTransactionPage = () => {
               );
             })
           )}
+          <div ref={bottomRef} />
         </div>
       )}
 

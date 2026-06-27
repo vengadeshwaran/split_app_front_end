@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { FileText, Percent, Hash, DollarSign, Loader2, CheckCircle } from "lucide-react";
+
+import { FileText, Percent, Hash, DollarSign, Loader2, CheckCircle, Check } from "lucide-react";
 import { useResuableQuery, useReusableMutation } from "../customHooks/useDataQuery";
 
 const categories = ["Food", "Transport", "Shopping", "Entertainment", "Utilities", "Others"];
@@ -19,7 +20,8 @@ const getInitials = (name = "") =>
 const GroupSpliPage = () => {
   const navigate    = useNavigate();
   const { id, name } = useParams();
-  const cs          = useSelector((s) => s.currency.symbol);
+  const cs            = useSelector((s) => s.currency.symbol);
+  const currentUserId = useSelector((s) => s.user.user_id);
   const groupName   = decodeURIComponent(name);
 
   const [title, setTitle]         = useState("");
@@ -38,37 +40,59 @@ const GroupSpliPage = () => {
 
   const members = group?.members || [];
 
-  const [percents, setPercents] = useState({});
-  const [shares, setShares]     = useState({});
-  const [custom, setCustom]     = useState({});
+  const [percents, setPercents]           = useState({});
+  const [shares, setShares]               = useState({});
+  const [custom, setCustom]               = useState({});
+  const [excludedMembers, setExcludedMembers] = useState(new Set());
 
-  const total = parseFloat(amount) || 0;
+  const toggleMember = (id) => {
+    setExcludedMembers((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const total         = parseFloat(amount) || 0;
+  const activeMembers = members.filter((m) => !excludedMembers.has(m.id));
 
   const memberAmounts = useMemo(() => {
     if (members.length === 0) return {};
+    const isExcluded = (id) => excludedMembers.has(id);
+
     if (splitType === "equal") {
-      const each = total / members.length;
-      return Object.fromEntries(members.map((m) => [m.id, each]));
+      const each = activeMembers.length > 0 ? total / activeMembers.length : 0;
+      return Object.fromEntries(members.map((m) => [m.id, isExcluded(m.id) ? 0 : each]));
     }
     if (splitType === "percent") {
       return Object.fromEntries(
-        members.map((m) => [m.id, (total * (parseFloat(percents[m.id] ?? 0) || 0)) / 100])
-      );
-    }
-    if (splitType === "shares") {
-      const totalShares = members.reduce((s, m) => s + (parseFloat(shares[m.id] ?? 1) || 0), 0);
-      return Object.fromEntries(
         members.map((m) => [
           m.id,
-          totalShares ? (total * (parseFloat(shares[m.id] ?? 1) || 0)) / totalShares : 0,
+          isExcluded(m.id) ? 0 : (total * (parseFloat(percents[m.id] ?? 0) || 0)) / 100,
         ])
       );
     }
-    return Object.fromEntries(members.map((m) => [m.id, parseFloat(custom[m.id] ?? 0) || 0]));
-  }, [splitType, total, percents, shares, custom, members]);
+    if (splitType === "shares") {
+      const totalShares = activeMembers.reduce((s, m) => s + (parseFloat(shares[m.id] ?? 1) || 0), 0);
+      return Object.fromEntries(
+        members.map((m) => [
+          m.id,
+          isExcluded(m.id)
+            ? 0
+            : totalShares
+            ? (total * (parseFloat(shares[m.id] ?? 1) || 0)) / totalShares
+            : 0,
+        ])
+      );
+    }
+    return Object.fromEntries(
+      members.map((m) => [m.id, isExcluded(m.id) ? 0 : parseFloat(custom[m.id] ?? 0) || 0])
+    );
+  }, [splitType, total, percents, shares, custom, members, excludedMembers, activeMembers]);
 
-  const percentSum = members.reduce((s, m) => s + (parseFloat(percents[m.id] ?? 0) || 0), 0);
-  const customSum  = members.reduce((s, m) => s + (parseFloat(custom[m.id]  ?? 0) || 0), 0);
+  const percentSum = activeMembers.reduce((s, m) => s + (parseFloat(percents[m.id] ?? 0) || 0), 0);
+  const customSum  = activeMembers.reduce((s, m) => s + (parseFloat(custom[m.id]  ?? 0) || 0), 0);
 
   const { mutate: submitExpense, isPending } = useReusableMutation({
     onSuccess: () => {
@@ -102,6 +126,11 @@ const GroupSpliPage = () => {
     e.preventDefault();
     if (!isValid) return;
     setApiError("");
+
+    const splits = Object.entries(memberAmounts)
+      .filter(([uid, amt]) => Number(uid) !== Number(currentUserId) && amt > 0)
+      .map(([uid, amt]) => ({ userId: Number(uid), amount: parseFloat(amt.toFixed(2)) }));
+
     submitExpense({
       endPoint: `groups/${id}/messages`,
       method:   "post",
@@ -111,6 +140,7 @@ const GroupSpliPage = () => {
         description: notes ? `${title} — ${notes}` : title,
         amount:      parseFloat(amount),
         currency:    "AED",
+        splits,
       },
     });
   };
@@ -217,68 +247,91 @@ const GroupSpliPage = () => {
               </div>
             ) : (
               <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                {members.map((m, i) => (
-                  <div
-                    key={m.id}
-                    className={`flex items-center gap-3 px-4 py-3 ${i !== members.length - 1 ? "border-b border-slate-100" : ""}`}
-                  >
+                {members.map((m, i) => {
+                  const isExcluded = excludedMembers.has(m.id);
+                  return (
                     <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
-                      style={{ backgroundColor: m.color_code }}
+                      key={m.id}
+                      className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                        i !== members.length - 1 ? "border-b border-slate-100" : ""
+                      } ${isExcluded ? "bg-slate-50 opacity-60" : ""}`}
                     >
-                      {getInitials(m.name)}
+                      {/* Checkbox */}
+                      <button
+                        type="button"
+                        onClick={() => toggleMember(m.id)}
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all ${
+                          !isExcluded
+                            ? "bg-indigo-600 border-indigo-600"
+                            : "border-slate-300 bg-white"
+                        }`}
+                      >
+                        {!isExcluded && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                      </button>
+
+                      <div
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
+                        style={{ backgroundColor: m.color_code }}
+                      >
+                        {getInitials(m.name)}
+                      </div>
+                      <span className={`flex-1 text-sm font-bold ${isExcluded ? "text-slate-400 line-through" : "text-slate-700"}`}>
+                        {m.name}
+                      </span>
+
+                      {splitType === "equal" && (
+                        <span className={`text-sm font-black ${isExcluded ? "text-slate-300" : "text-slate-800"}`}>
+                          {isExcluded ? `${cs}0.00` : `${cs}${total > 0 ? (memberAmounts[m.id] || 0).toFixed(2) : "0.00"}`}
+                        </span>
+                      )}
+
+                      {splitType === "percent" && (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text" inputMode="decimal"
+                            value={percents[m.id] ?? "0"}
+                            onChange={(e) => handleMemberVal(setPercents)(m.id, e.target.value)}
+                            disabled={isExcluded}
+                            className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-sm text-right outline-none focus:border-indigo-400 disabled:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed"
+                          />
+                          <span className="text-xs text-slate-400 font-bold">%</span>
+                        </div>
+                      )}
+
+                      {splitType === "shares" && (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text" inputMode="decimal"
+                            value={shares[m.id] ?? "1"}
+                            onChange={(e) => handleMemberVal(setShares)(m.id, e.target.value)}
+                            disabled={isExcluded}
+                            className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-sm text-right outline-none focus:border-indigo-400 disabled:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed"
+                          />
+                          <span className="text-xs text-slate-400 font-bold">sh</span>
+                        </div>
+                      )}
+
+                      {splitType === "custom" && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-slate-400 font-bold">{cs}</span>
+                          <input
+                            type="text" inputMode="decimal"
+                            value={custom[m.id] ?? "0"}
+                            onChange={(e) => handleMemberVal(setCustom)(m.id, e.target.value)}
+                            disabled={isExcluded}
+                            className="w-20 border border-slate-200 rounded-lg px-2 py-1 text-sm text-right outline-none focus:border-indigo-400 disabled:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed"
+                          />
+                        </div>
+                      )}
+
+                      {splitType !== "equal" && (
+                        <span className={`text-xs w-14 text-right ${isExcluded ? "text-slate-300" : "text-slate-400"}`}>
+                          {cs}{(memberAmounts[m.id] || 0).toFixed(2)}
+                        </span>
+                      )}
                     </div>
-                    <span className="flex-1 text-sm font-bold text-slate-700">{m.name}</span>
-
-                    {splitType === "equal" && (
-                      <span className="text-sm font-black text-slate-800">
-                        {cs}{total > 0 ? (memberAmounts[m.id] || 0).toFixed(2) : "0.00"}
-                      </span>
-                    )}
-
-                    {splitType === "percent" && (
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="text" inputMode="decimal"
-                          value={percents[m.id] ?? "0"}
-                          onChange={(e) => handleMemberVal(setPercents)(m.id, e.target.value)}
-                          className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-sm text-right outline-none focus:border-indigo-400"
-                        />
-                        <span className="text-xs text-slate-400 font-bold">%</span>
-                      </div>
-                    )}
-
-                    {splitType === "shares" && (
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="text" inputMode="decimal"
-                          value={shares[m.id] ?? "1"}
-                          onChange={(e) => handleMemberVal(setShares)(m.id, e.target.value)}
-                          className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-sm text-right outline-none focus:border-indigo-400"
-                        />
-                        <span className="text-xs text-slate-400 font-bold">sh</span>
-                      </div>
-                    )}
-
-                    {splitType === "custom" && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-slate-400 font-bold">{cs}</span>
-                        <input
-                          type="text" inputMode="decimal"
-                          value={custom[m.id] ?? "0"}
-                          onChange={(e) => handleMemberVal(setCustom)(m.id, e.target.value)}
-                          className="w-20 border border-slate-200 rounded-lg px-2 py-1 text-sm text-right outline-none focus:border-indigo-400"
-                        />
-                      </div>
-                    )}
-
-                    {splitType !== "equal" && (
-                      <span className="text-xs text-slate-400 w-14 text-right">
-                        {cs}{(memberAmounts[m.id] || 0).toFixed(2)}
-                      </span>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

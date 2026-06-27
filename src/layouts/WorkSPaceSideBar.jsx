@@ -29,6 +29,7 @@ const WorkspaceSidebar = ({
               <NavLink
                 key={item.path}
                 to={item.path}
+                end
                 className={({ isActive }) =>
                   `flex items-center justify-between py-2.5 px-3.5 rounded-2xl text-xs font-bold transition-all ${
                     isActive
@@ -61,7 +62,7 @@ const WorkspaceSidebar = ({
         {currentUser?.isAdmin && (
           <div className="bg-white border border-slate-200 rounded-3xl p-4 shadow-sm">
             <NavLink
-              to="/admin"
+              to="/admin-dashboard"
               className={({ isActive }) =>
                 `flex items-center gap-2.5 py-2.5 px-3.5 rounded-2xl text-xs font-bold transition-all border border-dashed ${
                   isActive

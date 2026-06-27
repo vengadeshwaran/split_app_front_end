@@ -51,23 +51,28 @@ const ExpenseSplitDetailPage = () => {
     );
   }
 
-  const total       = Number(msg.amount);
-  const members     = msg.members || [];
-  const shareAmount = members.length > 0 ? total / members.length : 0;
+  const total   = Number(msg.amount);
+  const members = msg.members || [];
 
   const splits = members.map((m) => ({
     id:       m.id,
     name:     m.name,
     initials: getInitials(m.name),
     color:    m.color_code,
-    share:    shareAmount,
+    share:    m.amount ?? 0,
     paid:     m.settled,
+    is_payer: m.is_payer ?? false,
   }));
 
   const paid       = splits.filter((s) => s.paid);
   const pending    = splits.filter((s) => !s.paid);
   const paidSum    = paid.reduce((s, m) => s + m.share, 0);
   const pendingSum = pending.reduce((s, m) => s + m.share, 0);
+
+  const nonPayerSplits  = splits.filter((s) => !s.is_payer);
+  const allEqual        = nonPayerSplits.length > 0 &&
+    nonPayerSplits.every((s) => Math.abs(s.share - nonPayerSplits[0].share) < 0.01);
+  const splitTypeLabel  = allEqual ? "Equal" : "Custom";
 
   return (
     <div className="flex flex-col min-h-screen bg-transparent pb-8">
@@ -98,7 +103,7 @@ const ExpenseSplitDetailPage = () => {
               </div>
               <div>
                 <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Split</p>
-                <p className="text-xs font-black text-slate-700">Equal · {members.length} members</p>
+                <p className="text-xs font-black text-slate-700">{splitTypeLabel} · {splits.length} members</p>
               </div>
             </div>
           </div>
