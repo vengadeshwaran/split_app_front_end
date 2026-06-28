@@ -19,14 +19,12 @@ const userSlice = createSlice({
         setUserState: (state, action) => {
             const updates = action.payload;
             if (updates) {
-                localStorage.setItem(
-                    "authUser",
-                    JSON.stringify({ ...state, ...updates })
-                );
-                return {
+                const merged = {
                     ...state,
                     ...updates,
                 };
+                localStorage.setItem("authUser", JSON.stringify(merged));
+                return merged;
             }
             return state;
         },

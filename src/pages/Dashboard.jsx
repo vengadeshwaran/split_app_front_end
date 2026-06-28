@@ -74,7 +74,7 @@ const Dashboard = () => {
                   {getInitials(group.name)}
                 </div>
                 <p className="text-[12px] font-bold text-slate-700 text-center leading-tight w-full truncate">
-                  {group.name.split(" ")[0]}
+                  {group.name?.split(" ")[0] || "Untitled"}
                 </p>
               </button>
             ))}
@@ -120,7 +120,7 @@ const Dashboard = () => {
                   {getInitials(friend.other_name)}
                 </div>
                 <p className="text-[12px] font-bold text-slate-700 text-center leading-tight w-full truncate">
-                  {friend.other_name.split(" ")[0]}
+                  {friend.other_name?.split(" ")[0] || "Friend"}
                 </p>
               </button>
             ))}

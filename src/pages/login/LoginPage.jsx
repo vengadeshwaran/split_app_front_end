@@ -5,20 +5,26 @@ import axios from "axios";
 import { Eye, EyeOff, SplitSquareHorizontal } from "lucide-react";
 import { setUserState } from "../../redux/slice/userSlice";
 import { setCurrency } from "../../redux/slice/currencySlice";
-import { getSymbolByName } from "../../constants/currencies";
+import { DEFAULT_CURRENCY, getSymbolByName } from "../../constants/currencies";
 import { useReusableMutation } from "../../customHooks/useDataQuery";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [email,    setEmail]    = useState("");
+  const [email,    setEmail]    = useState(() => localStorage.getItem("rememberedEmail") || "");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem("rememberedEmail"));
   const [showPw,   setShowPw]   = useState(false);
   const [apiError, setApiError] = useState("");
 
   const { mutate: loginUser, isPending } = useReusableMutation({
     onSuccess: async (res) => {
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
       dispatch(setUserState({
         isAuthenticated: true,
         token:    res.token,
@@ -33,7 +39,7 @@ const LoginPage = () => {
         });
         dispatch(setCurrency({ name: data.currency, symbol: getSymbolByName(data.currency) }));
       } catch {
-        dispatch(setCurrency({ name: "Indian Rupee (₹)", symbol: getSymbolByName("Indian Rupee (₹)") }));
+        dispatch(setCurrency({ name: DEFAULT_CURRENCY.name, symbol: DEFAULT_CURRENCY.symbol }));
       }
       navigate("/dashboard");
     },
@@ -124,6 +130,21 @@ const LoginPage = () => {
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+          </div>
+
+          {/* Remember Me */}
+          <div className="flex items-center py-0.5">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-200 accent-indigo-600 focus:ring-2 focus:ring-indigo-100 cursor-pointer"
+              />
+              <span className="text-xs font-semibold text-slate-500 hover:text-slate-600 transition-colors">
+                Remember me
+              </span>
+            </label>
           </div>
 
           {/* API Error */}

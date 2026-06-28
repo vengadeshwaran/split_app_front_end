@@ -10,8 +10,9 @@ const useIdle = () => {
         setIsIdle(true);
     }
     
+    const DEFAULT_IDLE_TIMEOUT_MS = 24 * 60 * 60 * 1000;
     const { getRemainingTime, getLastActiveTime } = useIdleTimer({
-        timeout: userIdleLogout ? userIdleLogout * 60 * 1000 : 24 * 60 * 60 * 1000,
+        timeout: userIdleLogout ? userIdleLogout * 60 * 1000 : DEFAULT_IDLE_TIMEOUT_MS,
         onIdle: handleOnIdle,
         throttle: 500
     })

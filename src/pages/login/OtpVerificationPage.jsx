@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux";
 import { SplitSquareHorizontal, Mail, RotateCcw, ArrowLeft } from "lucide-react";
 import { setUserState } from "../../redux/slice/userSlice";
 import { setCurrency } from "../../redux/slice/currencySlice";
-import { getSymbolByName } from "../../constants/currencies";
+import { DEFAULT_CURRENCY, getSymbolByName } from "../../constants/currencies";
 import { useReusableMutation } from "../../customHooks/useDataQuery";
 
 const OTP_LENGTH  = 6;
@@ -40,7 +40,7 @@ const OtpVerificationPage = () => {
     onSuccess: (res) => {
       setVerified(true);
       setTimeout(() => {
-        const currencyName = res.user.preferred_currency || 'Indian Rupee (₹)';
+        const currencyName = res.user.preferred_currency || DEFAULT_CURRENCY.name;
         dispatch(setUserState({
           isAuthenticated: true,
           token:   res.token,

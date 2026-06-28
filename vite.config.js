@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   // Load all env vars ('' prefix = include non-VITE_ vars too)
   const env = loadEnv(mode, process.cwd(), '')
 
-  console.log('[Vite] BACKEND_URL:', env.BACKEND_URL)
+  //console.log('[Vite] BACKEND_URL:', env.BACKEND_URL)
 
   return {
     plugins: [

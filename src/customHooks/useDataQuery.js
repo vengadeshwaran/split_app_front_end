@@ -31,7 +31,7 @@ export const useResuableQuery = ({ endpoint, params = null, withToken = false, d
         ? reduxToken || JSON.parse(localStorage.getItem("authUser") || "{}")?.token || null
         : null;
 
-    console.log("[useResuableQuery]", endpoint, "| reduxToken:", reduxToken, "| token:", token);
+    //console.log("[useResuableQuery]", endpoint, "| reduxToken:", reduxToken, "| token:", token);
 
     const data = {
         ...(params && { params }),

@@ -5,7 +5,7 @@ import axios from "axios";
 import { Eye, EyeOff, SplitSquareHorizontal } from "lucide-react";
 import { setUserState } from "../../redux/slice/userSlice";
 import { setCurrency } from "../../redux/slice/currencySlice";
-import { getSymbolByName } from "../../constants/currencies";
+import { DEFAULT_CURRENCY, getSymbolByName } from "../../constants/currencies";
 import { useReusableMutation } from "../../customHooks/useDataQuery";
 
 const SignUpPage = () => {
@@ -38,7 +38,7 @@ const SignUpPage = () => {
         });
         dispatch(setCurrency({ name: data.currency, symbol: getSymbolByName(data.currency) }));
       } catch {
-        dispatch(setCurrency({ name: "Indian Rupee (₹)", symbol: getSymbolByName("Indian Rupee (₹)") }));
+        dispatch(setCurrency({ name: DEFAULT_CURRENCY.name, symbol: DEFAULT_CURRENCY.symbol }));
       }
       navigate("/dashboard");
     },

@@ -48,7 +48,7 @@ const CurrencySettingsPage = () => {
   const [selected, setSelected] = useState(savedName);
 
   const selectedMeta   = CURRENCY_META.find((c) => c.name === selected);
-  const selectedSymbol = CURRENCY_LIST.find((c) => c.name === selected)?.symbol ?? "₹";
+  const selectedSymbol = CURRENCY_LIST.find((c) => c.name === selected)?.symbol ?? DEFAULT_CURRENCY.symbol;
   const isDirty        = selected !== savedName;
 
   const { mutate: saveCurrency, isPending: isSaving } = useReusableMutation({

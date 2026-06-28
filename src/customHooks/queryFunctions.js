@@ -40,7 +40,7 @@ export const mutationHandler = async ({ endPoint, payload = null, method = "post
         const headers = requestOptions.headers;
         const m = method.toLowerCase();
 
-        console.log(`[API] ${method.toUpperCase()} ${axios.defaults.baseURL}/${endPoint}`, payload ?? "");
+        //console.log(`[API] ${method.toUpperCase()} ${axios.defaults.baseURL}/${endPoint}`, payload ?? "");
 
         let response;
         if (m === "post") {
@@ -55,7 +55,7 @@ export const mutationHandler = async ({ endPoint, payload = null, method = "post
             response = await axios.get(endPoint, { headers, params: payload });
         }
 
-        console.log(`[API] ✅ ${response.status}`, response.data);
+        //console.log(`[API] ✅ ${response.status}`, response.data);
         return response.data;
     } catch (error) {
         console.error(`[API] ❌ ${endPoint}`, {

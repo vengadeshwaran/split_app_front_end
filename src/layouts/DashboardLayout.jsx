@@ -1,12 +1,12 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Outlet, useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import { LayoutDashboard, Users, UserCircle, ClipboardList, Settings, BadgeIndianRupee, ShieldCheck } from "lucide-react";
 
 import useIdle from "../customHooks/useIdle";
 import { useReusableMutation, useResuableQuery } from "../customHooks/useDataQuery";
 import { setCurrency } from "../redux/slice/currencySlice";
+import { setLogout } from "../redux/slice/userSlice";
 import { getSymbolByName } from "../constants/currencies";
 import Header from "../pages/header/Header";
 import WorkspacceSidebar from "./WorkSPaceSideBar";
@@ -26,6 +26,7 @@ const ADMIN_ITEMS = [
 function DashboardLayout() {
   const { isIdle } = useIdle();
   const dispatch   = useDispatch();
+  const navigate   = useNavigate();
 
   const { token, name, email, is_admin } = useSelector((state) => state.user);
   const currentUser = { name, email, isAdmin: is_admin };
@@ -50,28 +51,15 @@ function DashboardLayout() {
   /* ── Sidebar items: currency only for admin ── */
   const sidebarItems = is_admin ? [...BASE_ITEMS, ...ADMIN_ITEMS] : BASE_ITEMS;
 
-  const { mutate: userLogout } = useReusableMutation({
-    onSuccess: () => {},
-    onError:   (error) => { console.error("Logout failed:", error); },
-  });
-
-  const handleSeassionLogOut = async () => {};
+  const handleSeassionLogOut = React.useCallback(async () => {
+    dispatch(setLogout());
+    navigate("/");
+  }, [dispatch, navigate]);
 
   useEffect(() => {
-    let timerRef = null;
-    if (token) {
-      const decoded    = jwtDecode(token);
-      const expiryTime = new Date(decoded.exp * 1000).getTime();
-      const currentTime = new Date().getTime();
-      const timeout    = expiryTime - currentTime;
-      if (timeout > 0) {
-        timerRef = setTimeout(handleSeassionLogOut, timeout);
-      } else {
-        handleSeassionLogOut();
-      }
-      return () => { clearTimeout(timerRef); };
-    }
-  }, [token]);
+    // No token-based logout timer; token expiry is handled by the auth server.
+    return undefined;
+  }, [token, handleSeassionLogOut]);
 
   useEffect(() => {
     if (isIdle) { handleSeassionLogOut(); }
