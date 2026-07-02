@@ -18,7 +18,7 @@ const RequestMoneyPage = () => {
   const { mutate: submitRequest, isPending } = useReusableMutation({
     onSuccess: () => {
       setDone(true);
-      setTimeout(() => navigate(`/transaction/${id}/${name}`), 1200);
+      setTimeout(() => navigate(-1), 1200);
     },
     onError: (err) => {
       const msg = err?.response?.data?.error || err?.message || "Request failed. Please try again.";
