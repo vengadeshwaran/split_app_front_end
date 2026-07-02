@@ -127,7 +127,7 @@ Items marked **Fixed (2026-07-02)** have already been corrected in the codebase.
    `constants/currencies.js`, which would throw a `ReferenceError` if a currency lookup failed.
    The missing import has been added.
 6. **Branding vs. package identity mismatch**: the app is marketed to users as "SplitEasy" but the
-   underlying package/app ID (`myowntailwin` / `com.example.app`) still reflects default
+   underlying package/app ID (`Split App` / `com.example.app`) still reflects default
    scaffolding. This should be corrected before any public Android/Play Store release, since
    `com.example.app` is not an acceptable production package ID. *(Not yet fixed — requires a
    product/branding decision plus a native project rename.)*
