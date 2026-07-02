@@ -1,0 +1,410 @@
+/* ./src/index.css or ./src/App.css */
+@import "tailwindcss";
+
+/* Regular Font Style */
+@font-face {
+    font-family: 'finzorPopLight';
+    src: url('../src/assets/fonts/poppins_light.ttf') format('truetype');
+    font-weight: 300; /* Light weight */
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'finzorPopRegular';
+    src: url('../src/assets/fonts/poppins_regular.ttf') format('truetype');
+    font-weight: 400; /* Regular weight */
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'finzorPopMedium';
+    src: url('../src/assets/fonts/poppins_medium.ttf') format('truetype');
+    font-weight: 500; /* Medium weight */
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'finzorPopSemiBold';
+    src: url('../src/assets/fonts/poppins_semibold.ttf') format('truetype');
+    font-weight: 600; /* SemiBold weight */
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'finzorPopBold';
+    src: url('../src/assets/fonts/poppins_bold.ttf') format('truetype');
+    font-weight: 700; /* Bold weight */
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'finzorPopLightItalic';
+    src: url('../src/assets/fonts/Poppins-LightItalic.ttf') format('truetype');
+    font-weight: 300; /* Light weight */
+    font-style: italic; /* Italic style */
+}
+
+@font-face {
+    font-family: 'finzorPopMediumItalic';
+    src: url('../src/assets/fonts/Poppins-MediumItalic.ttf') format('truetype');
+    font-weight: 500; /* Medium weight */
+    font-style: italic; /* Italic style */
+}
+
+@font-face {
+    font-family: 'finzorPopSemiBoldItalic';
+    src: url('../src/assets/fonts/Poppins-SemiBoldItalic.ttf') format('truetype');
+    font-weight: 600; /* SemiBold weight */
+    font-style: italic; /* Italic style */
+}
+
+
+
+
+
+/* ============================================================
+   SplitEasy — Design System
+   Import this in index.css after @import "tailwindcss";
+   ============================================================ */
+
+/* ── 1. COLOR TOKENS ───────────────────────────────────────── */
+@layer base {
+  :root {
+    /* Primary — Indigo */
+    --color-primary:        #4f46e5; /* indigo-600  */
+    --color-primary-hover:  #4338ca; /* indigo-700  */
+    --color-primary-light:  #eef2ff; /* indigo-50   */
+    --color-primary-ring:   #6366f1; /* indigo-500  */
+
+    /* Surface / Background */
+    --color-bg-app:         #f8fafc; /* slate-50    */
+    --color-bg-card:        #ffffff;
+    --color-bg-muted:       #f1f5f9; /* slate-100   */
+    --color-bg-input:       #ffffff;
+    --color-bg-disabled:    #f9fafb; /* gray-50     */
+    --color-bg-tab:         #f3f4f6; /* gray-100    */
+    --color-bg-tab-active:  #ffffff;
+
+    /* Border */
+    --color-border:         #e5e7eb; /* gray-200    */
+    --color-border-card:    #e2e8f0; /* slate-200   */
+    --color-border-divider: #f3f4f6; /* gray-100    */
+
+    /* Text */
+    --color-text-heading:   #0f172a; /* slate-900   */
+    --color-text-body:      #374151; /* gray-700    */
+    --color-text-muted:     #6b7280; /* gray-500    */
+    --color-text-subtle:    #9ca3af; /* gray-400    */
+    --color-text-label:     #4b5563; /* gray-600    */
+
+    /* Status */
+    --color-danger:         #ef4444; /* red-500     */
+    --color-danger-bg:      #fef2f2; /* red-50      */
+    --color-danger-text:    #dc2626; /* red-600     */
+    --color-success:        #22c55e; /* green-500   */
+    --color-success-bg:     #f0fdf4; /* green-50    */
+    --color-success-text:   #16a34a; /* green-600   */
+    --color-warning:        #f59e0b; /* amber-500   */
+    --color-warning-bg:     #fffbeb; /* amber-50    */
+    --color-warning-text:   #d97706; /* amber-600   */
+
+    /* Radius */
+    --radius-sm:   0.5rem;   /* 8px  — rounded-lg  */
+    --radius-md:   0.75rem;  /* 12px — rounded-xl  */
+    --radius-lg:   1rem;     /* 16px — rounded-2xl */
+    --radius-xl:   1.5rem;   /* 24px — rounded-3xl */
+
+    /* Shadow */
+    --shadow-card:    0 20px 25px -5px rgb(0 0 0 / 0.04), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+    --shadow-btn:     0 4px 6px -1px rgb(79 70 229 / 0.12);
+    --shadow-icon:    0 10px 15px -3px rgb(79 70 229 / 0.20);
+    --shadow-input:   0 0 0 3px rgb(99 102 241 / 0.15);
+  }
+}
+
+/* ── 2. INPUT STYLES ────────────────────────────────────────── */
+@layer components {
+
+  /* Base input */
+  .se-input {
+    width: 100%;
+    padding: 0.75rem 1rem;          /* py-3 px-4 */
+    font-size: 0.875rem;            /* text-sm   */
+    color: var(--color-text-body);
+    background-color: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .se-input:focus {
+    border-color: transparent;
+    box-shadow: var(--shadow-input);
+  }
+
+  .se-input::placeholder {
+    color: var(--color-text-subtle);
+  }
+
+  .se-input:disabled {
+    background-color: var(--color-bg-disabled);
+    color: var(--color-text-subtle);
+    cursor: not-allowed;
+  }
+
+  /* Input with left icon */
+  .se-input-icon-left {
+    padding-left: 2.5rem;           /* pl-10 */
+  }
+
+  /* Input with both icons (e.g. password) */
+  .se-input-icon-both {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+
+  /* OTP / code input — centered & bold */
+  .se-input-otp {
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 0.25em;         /* tracking-widest */
+  }
+
+  /* Input wrapper (for icon overlays) */
+  .se-input-wrap {
+    position: relative;
+  }
+
+  .se-input-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-subtle);
+    pointer-events: none;
+  }
+
+  .se-input-icon-l { left:  0.75rem; }
+  .se-input-icon-r { right: 0.75rem; pointer-events: auto; }
+}
+
+/* ── 3. LABEL STYLES ────────────────────────────────────────── */
+@layer components {
+
+  .se-label {
+    display: block;
+    font-size: 0.65rem;             /* text-[10.5px] */
+    font-weight: 600;
+    color: var(--color-text-label);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.375rem;        /* mb-1.5 */
+  }
+
+  .se-label-required::after {
+    content: ' *';
+    color: var(--color-danger);
+  }
+
+  .se-hint {
+    font-size: 0.6875rem;           /* text-[11px] */
+    color: var(--color-text-subtle);
+    margin-top: 0.375rem;
+  }
+}
+
+/* ── 4. BUTTON STYLES ───────────────────────────────────────── */
+@layer components {
+
+  /* Primary button */
+  .se-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  }
+
+  .se-btn-primary {
+    background-color: var(--color-primary);
+    color: #fff;
+    box-shadow: var(--shadow-btn);
+  }
+
+  .se-btn-primary:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+  }
+
+  .se-btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .se-btn-primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  /* Ghost / outline button (social SSO) */
+  .se-btn-ghost {
+    background-color: #fff;
+    color: var(--color-text-body);
+    border: 1px solid var(--color-border);
+  }
+
+  .se-btn-ghost:hover:not(:disabled) {
+    background-color: var(--color-bg-muted);
+  }
+
+  .se-btn-ghost:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  /* Spinner inside button */
+  .se-spinner {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+    border-style: solid;
+    border-color: currentColor;
+    border-top-color: transparent;
+    border-radius: 9999px;
+    animation: se-spin 0.6s linear infinite;
+  }
+
+  @keyframes se-spin {
+    to { transform: rotate(360deg); }
+  }
+}
+
+/* ── 5. CARD / CONTAINER STYLES ────────────────────────────── */
+@layer components {
+
+  .se-card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border-card);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    padding: 2rem;
+  }
+
+  .se-card-sm {
+    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+  }
+
+  /* Icon badge (e.g. logo circle) */
+  .se-icon-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    background-color: var(--color-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-icon);
+    color: #fff;
+  }
+}
+
+/* ── 6. TAB SELECTOR ────────────────────────────────────────── */
+@layer components {
+
+  .se-tabs {
+    display: flex;
+    padding: 0.25rem;
+    background-color: var(--color-bg-tab);
+    border-radius: var(--radius-md);
+    gap: 0;
+  }
+
+  .se-tab {
+    flex: 1;
+    padding: 0.5rem 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+  }
+
+  .se-tab.active,
+  .se-tab[aria-selected="true"] {
+    background-color: var(--color-bg-tab-active);
+    color: var(--color-text-heading);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+  }
+}
+
+/* ── 7. ALERTS / FEEDBACK ───────────────────────────────────── */
+@layer components {
+
+  .se-alert {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+  }
+
+  .se-alert-error {
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger-text);
+  }
+
+  .se-alert-success {
+    background-color: var(--color-success-bg);
+    color: var(--color-success-text);
+  }
+
+  .se-alert-warning {
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning-text);
+  }
+}
+
+/* ── 8. DIVIDER ─────────────────────────────────────────────── */
+@layer components {
+
+  .se-divider {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 0;
+    gap: 1rem;
+    color: var(--color-text-subtle);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .se-divider::before,
+  .se-divider::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid var(--color-border-divider);
+  }
+}
+
+/* ── 9. PAGE WRAPPER ────────────────────────────────────────── */
+@layer components {
+
+  .se-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 85vh;
+    padding: 1rem;
+    background-color: var(--color-bg-app);
+  }
+}
