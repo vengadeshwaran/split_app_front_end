@@ -2,6 +2,7 @@ import React from "react";
 import { Route } from "react-router-dom";
 
 import PrivateRoute from "../PrivateRoute";
+import PublicRoute from "../PublicRoute";
 import LoginLayout from "../layouts/LoginLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import Dashboard from "../pages/Dashboard";
@@ -39,10 +40,12 @@ import PaymentSummaryPage from "../pages/PaymentSummaryPage";
 
 const MainRouter = () => [
   /* Login Pages */
-  <Route key="login" path="/" element={<LoginLayout />}>
-    <Route index element={<LoginPage />} />
-    <Route path="signup" element={<SignUpPage />} />
-    <Route path="verify" element={<OtpVerificationPage />} />
+  <Route key="login" element={<PublicRoute />}>
+    <Route path="/" element={<LoginLayout />}>
+      <Route index element={<LoginPage />} />
+      <Route path="signup" element={<SignUpPage />} />
+      <Route path="verify" element={<OtpVerificationPage />} />
+    </Route>
   </Route>,
 
   /* Components Sample */
