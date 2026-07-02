@@ -4,7 +4,7 @@ import { Provider } from "react-redux";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import axios from "axios";
 import { store } from "./redux/store/store";
-import Routes from "./Routes";
+import AppGate from "./AppGate";
 import "./index.css";
 
 const backendUrl = import.meta.env.BACKEND_URL;
@@ -20,7 +20,7 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
-        <Routes />
+        <AppGate />
       </Provider>
     </QueryClientProvider>
   </StrictMode>
